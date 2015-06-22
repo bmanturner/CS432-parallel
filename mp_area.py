@@ -1,5 +1,7 @@
 import multiprocessing as mp
+from time import sleep
 import random
+import sys
 
 
 # -returns true if provided coords are within region
@@ -16,7 +18,8 @@ def isInRegion(x, y):
 	else:
 		return False
 
-# -selects points on the xy-plane bounded by 0<=x<=10 and 0<=y<=10
+
+# -selects points on the xy-plane bounded by 4<=x<=6 and 4<=y<=6
 # -tests points to determine if they fall within a specified region
 # -tallies results in a global array using an index unique to the
 #					current process
@@ -27,59 +30,64 @@ def pokeGraph(results_arr, pid):
 
 	random.seed()
 	# jumpahead(n) ensures each thread is generating a uniquely random number
-	random.jumpahead(pid)
+	random.jumpahead(pid * 999999999)
 
 	# loop until process is terminated
 	while True:
-		x = random.uniform(0, 10)
-		y = random.uniform(0, 10)
-		# if coords are obviously not within region, increment miss counter
-		if (x < 4 or x > 6 or y < 4 or y > 6):
-			results_arr[miss_index] += 1
-		# otherwise, test using exact formula
-		elif (isInRegion(x, y)):
+		x = random.uniform(4, 6)
+		y = random.uniform(4, 6)
+		# test if is in region
+		if (isInRegion(x, y)):
 			results_arr[hit_index] += 1
 		else:
 			results_arr[miss_index] += 1
-
 	return None
+
 
 # -reads from global results array and determines area of the region
 # -returns area once it has been determined to sufficient accuracy
 def regionArea(results_arr, qty_processes):
 	area = 0
-	total_pokes = 0
-
 	# loop until answer found
 	while True:
+		print "sleep"
+		sleep(2)
 		total_hit = 0
 		total_miss = 0
 		# iterate through processes and sum results
 		for i in range(qty_processes):
 			total_hit += results_arr[i * 2]
 			total_miss += results_arr[i * 2 + 1]
-		# ensure total pokes has changed
-		if (total_pokes != total_hit + total_miss):
-			total_pokes = total_hit + total_miss
-			cmp_area = float(total_hit)/total_pokes
-			# check difference for accuracy
-			if( abs(area - cmp_area) <= 0.00000001 ):
-				return cmp_area * 100
-			else:
-				area = cmp_area
+		total_pokes = total_hit + total_miss
+		cmp_area = float(total_hit)/total_pokes
+		# check difference for accuracy
+		difference = abs(area - cmp_area)
+		if( difference <= 0.0000001 ):
+			return cmp_area * 4
+		else:
+			print "old %:      ", area
+			print "new %:      ", cmp_area
+			print "difference: ", difference
+			area = cmp_area
 
 
 
 if __name__ == '__main__':
-	# try to determine system's cpu count
-	try:
-		qty_processes = mp.cpu_count()
-	except NotImplementedError:
-		# default to 1 process
-		qty_processes = 1
+	# if user inputs number of processes
+	if (len(sys.argv) > 1):
+		qty_processes = int(sys.argv[1])
+	else:
+		# try to determine system's cpu count
+		try:
+			qty_processes = mp.cpu_count()
+		except NotImplementedError:
+			# default to 1 process
+			qty_processes = 1
+
+	print "Initializing %s process(es)" % (qty_processes)
 
 	# init global array that will hold hit and miss counts
-	res_arr = mp.Array('i', range(qty_processes * 2))
+	res_arr = mp.Array('i', range(qty_processes * 2), lock=False)
 	processes = []
 
 	for i in range(qty_processes):
