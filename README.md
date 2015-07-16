@@ -9,10 +9,12 @@ The 'hello world' of multiprocessing ported from an example C file discussed dur
 # The Assignment
 Determine the area of the region created by four overlapping circles of radius 3 centered at (-2,0), (2,0), (0,-2), and (0,2).
 
+![](http://i.imgur.com/RGJyEAw.jpg)
+
 ## The Solution
 Because the region is symmetrical across both the X and Y axis, I chose to find the area of the region constrained to the first quadrant (0 <= X <= 1 and 0 <= Y <= 1) and then multiply it by four to determine the total area.
 
-
+![](http://i.imgur.com/tX8VXHc.jpg)
 
 ### mp_monte_carlo.py (Multiprocessing Monte Carlo Simulation)
 Uses multiple processes to determine the area of an arbitrarily defined 2D region by means of generating and testing (x,y) coordinate pairs. An observer method intermittently tests the results until a satisfactory degree of accuracy can be obtained. Features lock-less multiprocessing by assigning each process unique indexes allowing for the modification of an array in shared memory without conflict.
