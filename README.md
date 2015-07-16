@@ -31,7 +31,7 @@ Uses multiple processes to determine the area of an arbitrarily defined 2D regio
 
 
 ### mpi_monte_carlo.c (Message Passing Interface Monte Carlo Simulation)
-Uses multiple hosts to determine the area of an arbitrarily defined 2D region by means of generating and testing (x,y) coordinate pairs. The master process intermittently tests the results until a satisfactory degree of accuracy can be obtained. Features asynchronous communication by means of MPI_Iprobe(), a non-blocking method that determines whether a message is waiting to be received. As a result, slower processes to not impede the performance of faster processes.
+Uses multiple hosts to determine the area of an arbitrarily defined 2D region by means of generating and testing (x,y) coordinate pairs. The master process intermittently tests the results until a satisfactory degree of accuracy can be obtained. Features asynchronous communication by means of MPI_Iprobe(), a non-blocking method that determines whether a message is waiting to be received. As a result, slower processes do not impede the performance of faster processes.
 
 #### Requirements
 * [MPICH](http://www.mpich.org/)
