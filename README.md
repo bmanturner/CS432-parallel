@@ -42,3 +42,12 @@ Uses multiple hosts to determine the area of an arbitrarily defined 2D region by
 % mpirun -np X mpi_monte_carlo
 [where N is an integer >= 2]
 ```
+
+## The Exact Solution
+
+This method is far more precise than the solution above, but the calculation is too quick to justify the use of parallel processing. The area of the region defined above can be broken up into the area of a square (green) and the area between the square and the curve (pink).
+
+![](http://i.imgur.com/OWEjpUE.jpg)
+
+### exact_solution.c 
+Uses Riemann sums to find the area under the curve by representing the curve as a row of rectangles whose height corresponds with the height of the curve. As the number of rectangles increases the width of each individual rectangle decreases, which in turn increases the precision of the result. This script uses 1,000,000,000 rectangles of width 8.7e-10 units to determine the area of the curve (3.635927916797164 units^2).
