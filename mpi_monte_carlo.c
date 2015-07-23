@@ -32,7 +32,6 @@ int main(int argc, char **argv) {
         int i = 1;
 
         while (1) {
-            sleep(1);
             // check each slave process for results (non-blocking)
             for (i = 1; i < size; i++) {
                 MPI_Iprobe(i, 0, comm, &msgWaiting, &status);
@@ -78,9 +77,7 @@ int main(int argc, char **argv) {
             } else {
                 // check for terminating message
                 MPI_Iprobe(root, 0, comm, &msgWaiting, &status);
-                if (msgWaiting) {
-                    break;
-                }
+                if (msgWaiting) {break;}
                 // send round of results to master process
                 MPI_Send(&results, 2, MPI_DOUBLE, root, 0, comm);
                 results[hitIndex] = 0;
