@@ -15,8 +15,8 @@
 int main(int argc, char **argv) {
     int rank, size, i;
     int root = 0;
-    int hits = 0;
-    int total = 0;
+    int hits = 0; // index
+    int total = 0; // index
     int msg_waiting = 0;
     double results[2] = {0};
 
