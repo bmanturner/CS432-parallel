@@ -43,6 +43,22 @@ Uses multiple hosts to determine the area of an arbitrarily defined 2D region by
 [where N is an integer >= 2]
 ```
 
+
+### hybrid_monte_carlo.c (MPI/Threading Monte Carlo Simulation)
+Uses multiple hosts to determine the area of an arbitrarily defined 2D region. Each sub-process spawns multiple threads that generate and test coordinate pairs; the results of which are stored in shared memory specific to the parent sub-process. The results are periodically read by the sub-process and sent to the master process. The threads never block and continue to run even while the sub-process is sending results to the master process.
+
+
+#### Requirements
+* [MPICH](http://www.mpich.org/)
+
+#### Running
+```
+% mpicc mpi_monte_carlo.c -o mpi_monte_carlo
+% mpirun -np X mpi_monte_carlo
+[where N is an integer >= 2]
+```
+
+
 ## The Exact Solution
 
 This method is far more precise than the solution above, but the calculation is too quick to justify the use of parallel processing. The area of the region defined above can be broken up into the area of a square (green) and the area between the square and the curve (pink).
