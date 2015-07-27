@@ -53,9 +53,9 @@ Uses multiple hosts to determine the area of an arbitrarily defined 2D region. E
 
 #### Running
 ```
-% mpicc mpi_monte_carlo.c -o mpi_monte_carlo
-% mpirun -np X mpi_monte_carlo
-[where N is an integer >= 2]
+% mpicc hybrid_monte_carlo.c -o hybrid_monte_carlo
+% mpirun -host nodeA,nodeB,nodeC,... hybrid_monte_carlo
+[where nodeX is host address for each networked computer. List nodeA twice to also run calculations on master computer]
 ```
 
 
