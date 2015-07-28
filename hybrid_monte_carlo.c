@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
     int rank, size, i;
     int root = 0;
     int hits = 0;  // index used for 'hits'
-    int total = 0; // index used for 'total'
+    int total = 1; // index used for 'total'
     int msg_waiting = 0;
 
     double results[2] = {0};
