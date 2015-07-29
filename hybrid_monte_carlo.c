@@ -18,6 +18,7 @@ typedef struct t_data {
     int rank;        // parent host's rank
     int id;          // thread id
     double* results; // shared memory results
+    pthread_mutex_t* lock;
 } t_data;
 
 // host's processor count
@@ -72,9 +73,11 @@ void *throw_darts(void *arguments) {
             }
             l_total++;
         } else {
+            pthread_mutex_lock(args->lock);
             // write local results to shared memory
             args->results[hits] += l_hits;
             args->results[total] += l_total;
+            pthread_mutex_unlock(args->lock);
             l_hits = 0;
             l_total = 0;
         }
@@ -115,7 +118,7 @@ int main(int argc, char **argv) {
                     total_pokes += results[total];
                 }
             }
-            if (total_pokes >= 50000000000) {
+            if (total_pokes >= 25000000000) {
                 area = (total_hits / total_pokes) * 4;
                 printf("Area=%.12lf\n", area);
                 // send terminating message to each slave process
@@ -131,12 +134,15 @@ int main(int argc, char **argv) {
         double shared_results[cpu_count * 2];
 
         pthread_t threads[cpu_count];
+        pthread_mutex_t lock;
+        pthread_mutex_init(&lock, NULL);
         t_data thread_data[cpu_count];
 
         for (i = 0; i < cpu_count; i++) {
             thread_data[i].id = i;
             thread_data[i].rank = rank;
             thread_data[i].results = shared_results;
+            thread_data[i].lock = &lock;
             pthread_create(&threads[i], NULL, &throw_darts, &thread_data[i]);
         }
 
@@ -154,10 +160,13 @@ int main(int argc, char **argv) {
             } else {
                 results[hits] = 0;
                 results[total] = 0;
+                pthread_mutex_lock(&lock);
                 for (i = 0; i < cpu_count; i++) {
                     results[hits] += shared_results[i * 2];
                     results[total] += shared_results[i * 2 + 1];
                 }
+                memset(shared_results, 0, sizeof(shared_results));
+                pthread_mutex_unlock(&lock);
                 // send results to root process
                 MPI_Send(&results, 2, MPI_DOUBLE, root, 0, comm);
             }
