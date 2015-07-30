@@ -32,7 +32,7 @@ int get_cpu_count() {
         if( !memcmp(str, "processor", 9) ) procCount++;
         fclose(fp);
     }
-    // mac fallback
+    // fallback
     if ( !procCount ) {
         procCount= sysconf(_SC_NPROCESSORS_ONLN);
     }
@@ -160,11 +160,12 @@ int main(int argc, char **argv) {
             } else {
                 results[hits] = 0;
                 results[total] = 0;
-                pthread_mutex_lock(&lock);
                 for (i = 0; i < cpu_count; i++) {
                     results[hits] += shared_results[i * 2];
                     results[total] += shared_results[i * 2 + 1];
                 }
+                // locks array to clear it
+                pthread_mutex_lock(&lock);
                 memset(shared_results, 0, sizeof(shared_results));
                 pthread_mutex_unlock(&lock);
                 // send results to root process
