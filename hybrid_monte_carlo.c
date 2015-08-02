@@ -18,25 +18,24 @@ typedef struct t_data {
     int rank;        // parent host's rank
     int id;          // thread id
     double* results; // shared memory results
-    pthread_mutex_t* lock;
 } t_data;
 
 // host's processor count
 int get_cpu_count() {
     char str[256];
-    int procCount = 0;
+    int cpu_count = 0;
     FILE *fp;
     // linux method
     if( (fp = fopen("/proc/cpuinfo", "r")) ) {
         while(fgets(str, sizeof str, fp))
-        if( !memcmp(str, "processor", 9) ) procCount++;
+        if( !memcmp(str, "processor", 9) ) cpu_count++;
         fclose(fp);
     }
     // fallback
-    if ( !procCount ) {
-        procCount= sysconf(_SC_NPROCESSORS_ONLN);
+    if ( !cpu_count ) {
+        cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
     }
-    return procCount;
+    return cpu_count;
 }
 
 // thread generates and tests random coordinates (coords either hit or miss)
@@ -52,14 +51,14 @@ void *throw_darts(void *arguments) {
     int total = tid * 2 + 1;
 
     // create seed unique to each thread across all nodes
-    unsigned int seed = (tid * args->rank * 99999999);
+    unsigned int seed = ( (tid * 9999) * (args->rank * 999) * 99999999 * 2 + 1);
 
     args->results[hits] = 0;
     args->results[total] = 0;
 
     while (1) {
         // stores results locally, periodically updates shared memory
-        if (l_total < 50000000) {
+        if (l_total < 50000000) { // 50mil
             x = ((double)rand_r(&seed)/(double)RAND_MAX);
             y = ((double)rand_r(&seed)/(double)RAND_MAX);
             dx = x + 2;
@@ -73,11 +72,9 @@ void *throw_darts(void *arguments) {
             }
             l_total++;
         } else {
-            pthread_mutex_lock(args->lock);
             // write local results to shared memory
             args->results[hits] += l_hits;
             args->results[total] += l_total;
-            pthread_mutex_unlock(args->lock);
             l_hits = 0;
             l_total = 0;
         }
@@ -118,7 +115,7 @@ int main(int argc, char **argv) {
                     total_pokes += results[total];
                 }
             }
-            if (total_pokes >= 25000000000) {
+            if (total_pokes >= 15000000000) {
                 area = (total_hits / total_pokes) * 4;
                 printf("Area=%.12lf\n", area);
                 // send terminating message to each slave process
@@ -132,17 +129,16 @@ int main(int argc, char **argv) {
     } else {
         int cpu_count = get_cpu_count();
         double shared_results[cpu_count * 2];
+        double l_hits = 0;
+        double l_total = 0;
 
         pthread_t threads[cpu_count];
-        pthread_mutex_t lock;
-        pthread_mutex_init(&lock, NULL);
         t_data thread_data[cpu_count];
 
         for (i = 0; i < cpu_count; i++) {
             thread_data[i].id = i;
             thread_data[i].rank = rank;
             thread_data[i].results = shared_results;
-            thread_data[i].lock = &lock;
             pthread_create(&threads[i], NULL, &throw_darts, &thread_data[i]);
         }
 
@@ -164,15 +160,16 @@ int main(int argc, char **argv) {
                     results[hits] += shared_results[i * 2];
                     results[total] += shared_results[i * 2 + 1];
                 }
-                // locks array to clear it
-                pthread_mutex_lock(&lock);
-                memset(shared_results, 0, sizeof(shared_results));
-                pthread_mutex_unlock(&lock);
+                results[hits] -= l_hits;
+                results[total] -= l_total;
+                l_hits += results[hits];
+                l_total += results[total];
                 // send results to root process
-                MPI_Send(&results, 2, MPI_DOUBLE, root, 0, comm);
+                MPI_Isend(&results, 2, MPI_DOUBLE, root, 0, comm, &request);
             }
         }
     }
 
     MPI_Finalize();
+    return 0;
 }
